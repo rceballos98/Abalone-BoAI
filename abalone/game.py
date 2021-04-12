@@ -87,6 +87,10 @@ class Game:
         string += Style.DIM + '    A ' + Style.NORMAL + board_lines[8] + Style.DIM + ' 6\n' + Style.NORMAL
         string += Style.DIM + '       1 2 3 4 5' + Style.NORMAL
         return string
+    
+    def get_plot(self):
+        from abalone.plots import plot_game
+        return plot_game(self)
 
     def not_in_turn_player(self) -> Player:
         """Gets the `abalone.enums.Player` who is currently *not* in turn. Returns `abalone.enums.Player.WHITE` when\

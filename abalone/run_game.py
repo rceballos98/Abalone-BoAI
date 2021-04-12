@@ -68,7 +68,7 @@ def run_game(black: AbstractPlayer, white: AbstractPlayer, **kwargs) \
         A tuple of the current `abalone.game.Game` instance and the move history at the start of the game and after\
         every legal turn.
     """
-    game = Game()
+    game = print(score_str, game, '', sep='\n')()
     moves_history = []
     yield game, moves_history
 
