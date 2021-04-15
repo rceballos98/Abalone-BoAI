@@ -21,12 +21,14 @@
 
 from traceback import format_exc
 from typing import Generator, List, Tuple, Union
+from matplotlib import pyplot as plt
 
 from abalone.abstract_player import AbstractPlayer
 from abalone.enums import Direction, Player, Space
 from abalone.game import Game, IllegalMoveException
 from abalone.utils import line_from_to
 
+WINNING_SCORE = 12
 
 def _get_winner(score: Tuple[int, int]) -> Union[Player, None]:
     """Returns the winner of the game based on the current score.
@@ -37,8 +39,8 @@ def _get_winner(score: Tuple[int, int]) -> Union[Player, None]:
     Returns:
         Either the `abalone.enums.Player` who won the game or `None` if no one has won yet.
     """
-    if 8 in score:
-        return Player.WHITE if score[0] == 8 else Player.BLACK
+    if WINNING_SCORE in score:
+        return Player.WHITE if score[0] == WINNING_SCORE else Player.BLACK
     return None
 
 
@@ -55,7 +57,7 @@ def _format_move(turn: Player, move: Tuple[Union[Space, Tuple[Space, Space]], Di
     return f'{moves + 1}: {turn.name} moves {", ".join(marbles)} in direction {move[1].name}'
 
 
-def run_game(black: AbstractPlayer, white: AbstractPlayer, **kwargs) \
+def run_game(black: AbstractPlayer, white: AbstractPlayer, logger=None, verbose=True,**kwargs) \
         -> Generator[Tuple[Game, List[Tuple[Union[Space, Tuple[Space, Space]], Direction]]], None, None]:
     """Runs a game instance and prints the progress / current state at every turn.
 
@@ -68,29 +70,38 @@ def run_game(black: AbstractPlayer, white: AbstractPlayer, **kwargs) \
         A tuple of the current `abalone.game.Game` instance and the move history at the start of the game and after\
         every legal turn.
     """
-    game = print(score_str, game, '', sep='\n')()
+    game = Game()
     moves_history = []
-    yield game, moves_history
+    # yield game, moves_history
 
     while True:
         score = game.get_score()
         score_str = f'BLACK {score[0]} - WHITE {score[1]}'
-        print(score_str, game, '', sep='\n')
+        if verbose:
+            print(score_str, '', sep='\n')
+            game.get_plot()
+
+        plt.show()
 
         winner = _get_winner(score)
         if winner is not None:
             print(f'{winner.name} won!')
             break
-
         try:
             move = black.turn(game, moves_history) if game.turn is Player.BLACK else white.turn(game, moves_history)
-            print(_format_move(game.turn, move, len(moves_history)), end='\n\n')
+            if logger is not None:
+                logger.log_turn(game, move)
+
+            if verbose:
+                print(_format_move(game.turn, move, len(moves_history)), end='\n\n')
 
             game.move(*move)
+
             game.switch_player()
+
             moves_history.append(move)
 
-            yield game, moves_history
+            # yield game, moves_history
         except IllegalMoveException as ex:
             print(f'{game.turn.name}\'s tried to perform an illegal move ({ex})\n')
             break
@@ -98,6 +109,8 @@ def run_game(black: AbstractPlayer, white: AbstractPlayer, **kwargs) \
             print(f'{game.turn.name}\'s move caused an exception\n')
             print(format_exc())
             break
+    
+    return game, winner, logger
 
 
 if __name__ == '__main__':  # pragma: no cover

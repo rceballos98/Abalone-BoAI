@@ -29,7 +29,7 @@ with open('README.md', 'r') as readme:
     long_description = re.sub('\\(\\./', github_url_prefix, long_description)
 
 setuptools.setup(
-    name='abalone-boai',
+    name='abalone',
     version='1.0.0',
     author='Scriptim',
     author_email='Scriptim@gmx.de',

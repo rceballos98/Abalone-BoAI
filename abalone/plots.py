@@ -1,8 +1,16 @@
 from hexalattice import hexalattice as hexa
 from matplotlib import pyplot as plt
 import numpy as np
+from pathlib import Path
+import imageio
+import glob
+import hashlib
+from typing import List
+from tqdm import tqdm
 
-def plot_game(game):
+from abalone.game import Game
+
+def plot_game(game: Game):
    
     hex_centers, h_ax = hexa.create_hex_grid(nx=9, ny=9, min_diam=1, do_plot=False)
     tile_centers_x = hex_centers[:, 0]
@@ -60,3 +68,30 @@ def plot_game(game):
     ax_handler.axes.yaxis.set_visible(False)
     
     return ax_handler
+
+def get_moves_gif(moves: List[str], fps = 1) -> Path:
+    game = Game()
+    figures = []
+    dir_path = Path('videos', hashlib.md5(str(moves).encode()).hexdigest())
+    gif_path = Path(dir_path, 'moves.gif')
+    
+    if gif_path.exists():
+        print(f'{dir_path} already exists. Skipping')
+        return gif_path
+    
+    dir_path.mkdir(parents=True, exist_ok=True)  
+
+    for i, move in tqdm(enumerate(moves)):
+        game.move(*move)
+        game.switch_player()
+        fig = game.get_plot()
+        plt.savefig(Path(dir_path,f'm{i}.jpg'))
+        plt.close()
+
+    frames = []
+    for filename in glob.glob(f'{dir_path}/*.jpg'):
+        frames.append(imageio.imread(filename))
+    
+    imageio.mimsave(gif_path.as_posix(), frames, format='GIF', duration=len(frames)//fps)
+
+    return gif_path
